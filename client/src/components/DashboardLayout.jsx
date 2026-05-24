@@ -1,6 +1,24 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
+
+function NavLink({ to, children }) {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
+  return (
+    <Link
+      to={to}
+      className={`text-sm font-medium ${
+        isActive
+          ? 'text-blue-600'
+          : 'text-slate-600 hover:text-slate-900'
+      }`}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function DashboardLayout({ title, children }) {
   const { user, logout } = useAuth();
@@ -20,24 +38,9 @@ export default function DashboardLayout({ title, children }) {
             </h1>
           </div>
           <nav className="flex items-center gap-4">
-            <Link
-              to={dashboardPath}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              Dashboard
-            </Link>
-            <Link
-              to={leadsPath}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              Leads
-            </Link>
-            <Link
-              to={clientsPath}
-              className="text-sm font-medium text-slate-600 hover:text-slate-900"
-            >
-              Clients
-            </Link>
+            <NavLink to={dashboardPath}>Dashboard</NavLink>
+            <NavLink to={leadsPath}>Leads</NavLink>
+            <NavLink to={clientsPath}>Clients</NavLink>
             <button
               type="button"
               onClick={logout}

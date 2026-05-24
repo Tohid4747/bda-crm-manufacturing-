@@ -1,46 +1,198 @@
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import DashboardLayout from '../components/DashboardLayout';
-import UpcomingFollowUps from '../components/UpcomingFollowUps';
-import { useAuth } from '../context/AuthContext';
+import StatCard from '../components/StatCard';
+import { STATUS_CHART_COLORS } from '../constants/chartColors';
+import * as dashboardService from '../services/dashboardService';
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await dashboardService.getAdminDashboard();
+      setData(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  const pieData =
+    data?.leadStatusBreakdown
+      ?.filter((item) => item.count > 0)
+      .map((item) => ({
+        name: item.status,
+        value: item.count,
+      })) || [];
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <UpcomingFollowUps />
-        <div className="bg-white rounded-xl border border-slate-200 p-8">
-          <p className="text-slate-600">
-            Welcome, <strong>{user?.name}</strong>. Manage your team and leads from
-            here.
-          </p>
-          <dl className="mt-6 grid gap-3 text-sm">
-            <div className="flex gap-2">
-              <dt className="text-slate-500 w-16">Email</dt>
-              <dd className="text-slate-900">{user?.email}</dd>
+      {error && (
+        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <p className="text-slate-600">Loading dashboard...</p>
+      ) : data ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <StatCard label="Total Leads" value={data.stats.totalLeads} />
+            <StatCard label="Total Clients" value={data.stats.totalClients} />
+            <StatCard
+              label="BDA Members"
+              value={data.stats.totalBdaMembers}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Lead Status Breakdown
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                Distribution of leads by pipeline stage
+              </p>
+              <div className="h-80 mt-6">
+                {pieData.length === 0 ? (
+                  <p className="text-sm text-slate-500 flex items-center justify-center h-full">
+                    No lead data yet
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={100}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
+                      >
+                        {pieData.map((entry) => (
+                          <Cell
+                            key={entry.name}
+                            fill={STATUS_CHART_COLORS[entry.name] || '#94a3b8'}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              <dt className="text-slate-500 w-16">Role</dt>
-              <dd className="text-slate-900">{user?.role}</dd>
+
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Monthly Leads Added
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                New leads created over the last 6 months
+              </p>
+              <div className="h-80 mt-6">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.monthlyLeadsTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fontSize: 12 }}
+                      interval={0}
+                      angle={-25}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Bar
+                      dataKey="count"
+                      name="Leads"
+                      fill="#3b82f6"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </dl>
-          <div className="flex flex-wrap gap-3 mt-8">
-            <Link
-              to="/admin/leads"
-              className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Go to Leads
-            </Link>
-            <Link
-              to="/admin/clients"
-              className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Go to Clients
-            </Link>
+          </div>
+
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-900">
+                Top Performing BDAs
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                Ranked by closed won leads
+              </p>
+            </div>
+            {data.topPerformingBdas.length === 0 ? (
+              <p className="p-8 text-center text-sm text-slate-500">
+                No closed won leads yet
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
+                    <tr>
+                      <th className="px-6 py-3 font-medium">Rank</th>
+                      <th className="px-6 py-3 font-medium">BDA Name</th>
+                      <th className="px-6 py-3 font-medium">Email</th>
+                      <th className="px-6 py-3 font-medium text-right">
+                        Closed Won
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {data.topPerformingBdas.map((bda, index) => (
+                      <tr key={bda.id} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-3 text-slate-500">
+                          #{index + 1}
+                        </td>
+                        <td className="px-6 py-3 font-medium text-slate-900">
+                          {bda.name}
+                        </td>
+                        <td className="px-6 py-3 text-slate-600">
+                          {bda.email}
+                        </td>
+                        <td className="px-6 py-3 text-right font-semibold text-emerald-700">
+                          {bda.closedWon}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      ) : null}
     </DashboardLayout>
   );
 }

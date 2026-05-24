@@ -1,46 +1,120 @@
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import DashboardLayout from '../components/DashboardLayout';
+import StatCard from '../components/StatCard';
 import UpcomingFollowUps from '../components/UpcomingFollowUps';
-import { useAuth } from '../context/AuthContext';
+import { STATUS_CHART_COLORS } from '../constants/chartColors';
+import * as dashboardService from '../services/dashboardService';
 
 export default function BDADashboard() {
-  const { user } = useAuth();
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const fetchDashboard = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await dashboardService.getBdaDashboard();
+      setData(response.data.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load dashboard');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [fetchDashboard]);
+
+  const pipelineData =
+    data?.pipelineStatus
+      ?.filter((item) => item.count > 0)
+      .map((item) => ({
+        status: item.status,
+        count: item.count,
+      })) || [];
 
   return (
     <DashboardLayout title="BDA Dashboard">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <UpcomingFollowUps />
-        <div className="bg-white rounded-xl border border-slate-200 p-8">
-          <p className="text-slate-600">
-            Welcome, <strong>{user?.name}</strong>. View and update leads assigned to
-            you.
-          </p>
-          <dl className="mt-6 grid gap-3 text-sm">
-            <div className="flex gap-2">
-              <dt className="text-slate-500 w-16">Email</dt>
-              <dd className="text-slate-900">{user?.email}</dd>
+      {error && (
+        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+
+      {loading ? (
+        <p className="text-slate-600">Loading dashboard...</p>
+      ) : data ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <StatCard label="My Total Leads" value={data.stats.myTotalLeads} />
+            <StatCard
+              label="My Closed Deals"
+              value={data.stats.myClosedDeals}
+              subtext="Leads with Closed Won status"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900">
+                My Pipeline
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                Leads by status in your pipeline
+              </p>
+              <div className="h-80 mt-6">
+                {pipelineData.length === 0 ? (
+                  <p className="text-sm text-slate-500 flex items-center justify-center h-full">
+                    No leads in your pipeline yet
+                  </p>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={pipelineData}
+                      layout="vertical"
+                      margin={{ left: 20, right: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis type="number" allowDecimals={false} />
+                      <YAxis
+                        type="category"
+                        dataKey="status"
+                        width={100}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip />
+                      <Bar dataKey="count" name="Leads" radius={[0, 4, 4, 0]}>
+                        {pipelineData.map((entry) => (
+                          <Cell
+                            key={entry.status}
+                            fill={
+                              STATUS_CHART_COLORS[entry.status] || '#94a3b8'
+                            }
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
             </div>
-            <div className="flex gap-2">
-              <dt className="text-slate-500 w-16">Role</dt>
-              <dd className="text-slate-900">{user?.role}</dd>
-            </div>
-          </dl>
-          <div className="flex flex-wrap gap-3 mt-8">
-            <Link
-              to="/bda/leads"
-              className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Go to My Leads
-            </Link>
-            <Link
-              to="/bda/clients"
-              className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              Go to My Clients
-            </Link>
+
+            <UpcomingFollowUps />
           </div>
         </div>
-      </div>
+      ) : null}
     </DashboardLayout>
   );
 }
