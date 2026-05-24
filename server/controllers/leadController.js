@@ -1,5 +1,6 @@
 const Lead = require('../models/Lead');
 const User = require('../models/User');
+const { createClientFromLead } = require('../services/clientConversionService');
 
 const { STATUSES } = Lead;
 
@@ -64,6 +65,10 @@ const createLead = async (req, res) => {
       assignedTo: assignedTo || null,
       notes,
     });
+
+    if (lead.status === 'Closed Won') {
+      await createClientFromLead(lead);
+    }
 
     const populated = await Lead.findById(lead._id).populate(
       'assignedTo',
@@ -158,6 +163,7 @@ const updateLead = async (req, res) => {
     }
 
     const { name, company, contact, email, status, notes } = req.body;
+    const previousStatus = lead.status;
 
     if (status && !STATUSES.includes(status)) {
       return res.status(400).json({
@@ -194,6 +200,10 @@ const updateLead = async (req, res) => {
     if (notes !== undefined) lead.notes = notes;
 
     await lead.save();
+
+    if (lead.status === 'Closed Won' && previousStatus !== 'Closed Won') {
+      await createClientFromLead(lead);
+    }
 
     const updated = await Lead.findById(lead._id).populate(
       'assignedTo',

@@ -6,6 +6,7 @@ export default function DashboardLayout({ title, children }) {
   const { user, logout } = useAuth();
   const isAdmin = user?.role === ROLES.ADMIN;
   const leadsPath = isAdmin ? '/admin/leads' : '/bda/leads';
+  const clientsPath = isAdmin ? '/admin/clients' : '/bda/clients';
   const dashboardPath = isAdmin ? '/admin/dashboard' : '/bda/dashboard';
 
   return (
@@ -27,9 +28,15 @@ export default function DashboardLayout({ title, children }) {
             </Link>
             <Link
               to={leadsPath}
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
             >
               Leads
+            </Link>
+            <Link
+              to={clientsPath}
+              className="text-sm font-medium text-slate-600 hover:text-slate-900"
+            >
+              Clients
             </Link>
             <button
               type="button"

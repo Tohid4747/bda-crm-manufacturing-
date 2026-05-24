@@ -7,6 +7,8 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import BDADashboard from './pages/BDADashboard';
 import LeadsPage from './pages/LeadsPage';
+import ClientsPage from './pages/ClientsPage';
+import ClientDetailPage from './pages/ClientDetailPage';
 import { ROLES } from './constants/auth';
 
 function RootRedirect() {
@@ -68,6 +70,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/clients"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ClientsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/clients/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <ClientDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/bda/dashboard"
         element={
           <ProtectedRoute allowedRoles={[ROLES.BDA]}>
@@ -80,6 +98,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[ROLES.BDA]}>
             <LeadsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bda/clients"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.BDA]}>
+            <ClientsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bda/clients/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.BDA]}>
+            <ClientDetailPage />
           </ProtectedRoute>
         }
       />

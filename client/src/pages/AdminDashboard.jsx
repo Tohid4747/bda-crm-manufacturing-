@@ -22,12 +22,20 @@ export default function AdminDashboard() {
             <dd className="text-slate-900">{user?.role}</dd>
           </div>
         </dl>
-        <Link
-          to="/admin/leads"
-          className="inline-flex mt-8 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Go to Leads
-        </Link>
+        <div className="flex flex-wrap gap-3 mt-8">
+          <Link
+            to="/admin/leads"
+            className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            Go to Leads
+          </Link>
+          <Link
+            to="/admin/clients"
+            className="inline-flex rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Go to Clients
+          </Link>
+        </div>
       </div>
     </DashboardLayout>
   );
