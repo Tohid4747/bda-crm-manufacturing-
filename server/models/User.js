@@ -28,6 +28,10 @@ const userSchema = new mongoose.Schema(
       enum: ROLES,
       required: [true, 'Role is required'],
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
@@ -47,6 +51,7 @@ userSchema.methods.toSafeObject = function toSafeObject() {
     name: this.name,
     email: this.email,
     role: this.role,
+    isActive: this.isActive,
   };
 };
 

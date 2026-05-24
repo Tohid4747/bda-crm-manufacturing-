@@ -10,6 +10,8 @@ import LeadsPage from './pages/LeadsPage';
 import LeadDetailPage from './pages/LeadDetailPage';
 import ClientsPage from './pages/ClientsPage';
 import ClientDetailPage from './pages/ClientDetailPage';
+import TeamPage from './pages/TeamPage';
+import TeamMemberDetailPage from './pages/TeamMemberDetailPage';
 import { ROLES } from './constants/auth';
 
 function RootRedirect() {
@@ -91,6 +93,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
             <ClientDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/team"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <TeamPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/team/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <TeamMemberDetailPage />
           </ProtectedRoute>
         }
       />

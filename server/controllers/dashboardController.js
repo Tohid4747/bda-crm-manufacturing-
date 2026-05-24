@@ -24,7 +24,7 @@ const getAdminDashboard = async (req, res) => {
     const [totalLeads, totalClients, totalBdaMembers] = await Promise.all([
       Lead.countDocuments(),
       Client.countDocuments(),
-      User.countDocuments({ role: 'BDA' }),
+      User.countDocuments({ role: 'BDA', isActive: true }),
     ]);
 
     const statusAgg = await Lead.aggregate([

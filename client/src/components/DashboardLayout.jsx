@@ -2,9 +2,11 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 
-function NavLink({ to, children }) {
+function NavLink({ to, children, matchPrefix = false }) {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  const isActive = matchPrefix
+    ? location.pathname === to || location.pathname.startsWith(`${to}/`)
+    : location.pathname === to;
 
   return (
     <Link
@@ -26,6 +28,7 @@ export default function DashboardLayout({ title, children }) {
   const leadsPath = isAdmin ? '/admin/leads' : '/bda/leads';
   const clientsPath = isAdmin ? '/admin/clients' : '/bda/clients';
   const dashboardPath = isAdmin ? '/admin/dashboard' : '/bda/dashboard';
+  const teamPath = '/admin/team';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -41,6 +44,11 @@ export default function DashboardLayout({ title, children }) {
             <NavLink to={dashboardPath}>Dashboard</NavLink>
             <NavLink to={leadsPath}>Leads</NavLink>
             <NavLink to={clientsPath}>Clients</NavLink>
+            {isAdmin && (
+              <NavLink to={teamPath} matchPrefix>
+                Team
+              </NavLink>
+            )}
             <button
               type="button"
               onClick={logout}
