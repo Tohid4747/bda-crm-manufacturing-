@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { ACTIVITY_TYPES } from '../constants/activities';
+import ErrorAlert from './ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 const emptyForm = {
   type: 'Call',
@@ -30,10 +32,7 @@ export default function ActivityForm({ leadId, onSuccess }) {
       });
       setForm(emptyForm);
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          'Failed to log activity. Please try again.'
-      );
+      setError(getApiErrorMessage(err, 'Failed to log activity. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -43,11 +42,7 @@ export default function ActivityForm({ leadId, onSuccess }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-sm font-semibold text-slate-900">Log Activity</h3>
 
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert message={error} onDismiss={() => setError('')} />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>

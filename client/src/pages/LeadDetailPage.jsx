@@ -4,6 +4,9 @@ import DashboardLayout from '../components/DashboardLayout';
 import StatusBadge from '../components/StatusBadge';
 import ActivityForm from '../components/ActivityForm';
 import ActivityTimeline from '../components/ActivityTimeline';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import * as leadService from '../services/leadService';
@@ -29,7 +32,7 @@ export default function LeadDetailPage() {
       const response = await leadService.getLeadById(id);
       setLead(response.data.data.lead);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load lead');
+      setError(getApiErrorMessage(err, 'Failed to load lead'));
       setLead(null);
     } finally {
       setLoadingLead(false);
@@ -43,6 +46,7 @@ export default function LeadDetailPage() {
       setActivities(response.data.data.activities);
     } catch (err) {
       setActivities([]);
+      setError(getApiErrorMessage(err, 'Failed to load activities'));
     } finally {
       setLoadingActivities(false);
     }
@@ -72,16 +76,18 @@ export default function LeadDetailPage() {
         ← Back to Leads
       </Link>
 
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
+
       {loadingLead ? (
-        <p className="text-slate-600">Loading lead...</p>
-      ) : error ? (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <LoadingSpinner label="Loading lead..." />
       ) : lead ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900">
@@ -118,13 +124,13 @@ export default function LeadDetailPage() {
               </dl>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
               <ActivityForm leadId={lead.id} onSuccess={handleLogActivity} />
             </div>
           </div>
 
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
+            <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
               <h3 className="text-lg font-semibold text-slate-900">
                 Activity Timeline
               </h3>

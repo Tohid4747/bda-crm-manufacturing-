@@ -6,3 +6,5 @@ export const getActivitiesByLead = (leadId) =>
   apiClient.get(`/activities/lead/${leadId}`);
 
 export const getUpcomingActivities = () => apiClient.get('/activities/upcoming');
+
+export const getDueTodayCount = () => apiClient.get('/activities/due-today/count');

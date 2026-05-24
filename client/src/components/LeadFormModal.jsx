@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { LEAD_STATUSES } from '../constants/leads';
+import ErrorAlert from './ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 
 const emptyForm = {
   name: '',
@@ -71,17 +73,15 @@ export default function LeadFormModal({
       await onSubmit(payload);
       onClose();
     } catch (err) {
-      setError(
-        err.response?.data?.message || 'Failed to save lead. Please try again.'
-      );
+      setError(getApiErrorMessage(err, 'Failed to save lead. Please try again.'));
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-      <div className="bg-white rounded-xl shadow-lg border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50">
+      <div className="bg-white rounded-t-xl sm:rounded-xl shadow-lg border border-slate-200 w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
           <button
@@ -95,11 +95,7 @@ export default function LeadFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
+          <ErrorAlert message={error} onDismiss={() => setError('')} />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="sm:col-span-2">

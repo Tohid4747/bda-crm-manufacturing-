@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import * as clientService from '../services/clientService';
@@ -39,7 +42,7 @@ export default function ClientsPage() {
       const response = await clientService.getClients();
       setClients(response.data.data.clients);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load clients');
+      setError(getApiErrorMessage(err, 'Failed to load clients'));
     } finally {
       setLoading(false);
     }
@@ -57,7 +60,9 @@ export default function ClientsPage() {
   return (
     <DashboardLayout title={pageTitle}>
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-900">Clients</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+          Clients
+        </h2>
         <p className="text-sm text-slate-600 mt-1">
           {isAdmin
             ? 'Clients converted from won leads across your team'
@@ -65,15 +70,15 @@ export default function ClientsPage() {
         </p>
       </div>
 
-      {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
-          <p className="p-8 text-center text-slate-600">Loading clients...</p>
+          <LoadingSpinner label="Loading clients..." />
         ) : clients.length === 0 ? (
           <p className="p-8 text-center text-slate-600">
             No clients yet. Move a lead to <strong>Closed Won</strong> to create a

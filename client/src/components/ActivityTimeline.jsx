@@ -1,4 +1,5 @@
 import ActivityTypeBadge from './ActivityTypeBadge';
+import LoadingSpinner from './LoadingSpinner';
 
 function formatDateTime(dateStr) {
   if (!dateStr) return '—';
@@ -37,7 +38,7 @@ function getFollowUpLabel(followUpDate) {
 
 export default function ActivityTimeline({ activities, loading }) {
   if (loading) {
-    return <p className="text-sm text-slate-600">Loading activities...</p>;
+    return <LoadingSpinner label="Loading activities..." className="py-6" />;
   }
 
   if (!activities.length) {

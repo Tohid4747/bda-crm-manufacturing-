@@ -14,7 +14,10 @@ import {
 } from 'recharts';
 import DashboardLayout from '../components/DashboardLayout';
 import StatCard from '../components/StatCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
 import { STATUS_CHART_COLORS } from '../constants/chartColors';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import * as dashboardService from '../services/dashboardService';
 
 export default function AdminDashboard() {
@@ -29,7 +32,7 @@ export default function AdminDashboard() {
       const response = await dashboardService.getAdminDashboard();
       setData(response.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load dashboard');
+      setError(getApiErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
@@ -49,14 +52,14 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
 
       {loading ? (
-        <p className="text-slate-600">Loading dashboard...</p>
+        <LoadingSpinner label="Loading dashboard..." />
       ) : data ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -76,7 +79,7 @@ export default function AdminDashboard() {
               <p className="text-sm text-slate-600 mt-1">
                 Distribution of leads by pipeline stage
               </p>
-              <div className="h-80 mt-6">
+              <div className="h-64 sm:h-80 mt-6 min-w-0">
                 {pieData.length === 0 ? (
                   <p className="text-sm text-slate-500 flex items-center justify-center h-full">
                     No lead data yet
@@ -117,7 +120,7 @@ export default function AdminDashboard() {
               <p className="text-sm text-slate-600 mt-1">
                 New leads created over the last 6 months
               </p>
-              <div className="h-80 mt-6">
+              <div className="h-64 sm:h-80 mt-6 min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={data.monthlyLeadsTrend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />

@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children, allowedRoles }) {
@@ -6,11 +7,7 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   const location = useLocation();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-slate-600">Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading..." className="min-h-screen" />;
   }
 
   if (!isAuthenticated) {

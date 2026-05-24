@@ -11,8 +11,11 @@ import {
 } from 'recharts';
 import DashboardLayout from '../components/DashboardLayout';
 import StatCard from '../components/StatCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
 import UpcomingFollowUps from '../components/UpcomingFollowUps';
 import { STATUS_CHART_COLORS } from '../constants/chartColors';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import * as dashboardService from '../services/dashboardService';
 
 export default function BDADashboard() {
@@ -27,7 +30,7 @@ export default function BDADashboard() {
       const response = await dashboardService.getBdaDashboard();
       setData(response.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load dashboard');
+      setError(getApiErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
@@ -47,14 +50,14 @@ export default function BDADashboard() {
 
   return (
     <DashboardLayout title="BDA Dashboard">
-      {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
 
       {loading ? (
-        <p className="text-slate-600">Loading dashboard...</p>
+        <LoadingSpinner label="Loading dashboard..." />
       ) : data ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -74,7 +77,7 @@ export default function BDADashboard() {
               <p className="text-sm text-slate-600 mt-1">
                 Leads by status in your pipeline
               </p>
-              <div className="h-80 mt-6">
+              <div className="h-64 sm:h-80 mt-6 min-w-0">
                 {pipelineData.length === 0 ? (
                   <p className="text-sm text-slate-500 flex items-center justify-center h-full">
                     No leads in your pipeline yet

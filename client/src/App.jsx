@@ -12,17 +12,15 @@ import ClientsPage from './pages/ClientsPage';
 import ClientDetailPage from './pages/ClientDetailPage';
 import TeamPage from './pages/TeamPage';
 import TeamMemberDetailPage from './pages/TeamMemberDetailPage';
+import NotFoundPage from './pages/NotFoundPage';
+import LoadingSpinner from './components/LoadingSpinner';
 import { ROLES } from './constants/auth';
 
 function RootRedirect() {
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <p className="text-slate-600">Loading...</p>
-      </div>
-    );
+    return <LoadingSpinner label="Loading..." className="min-h-screen" />;
   }
 
   if (!isAuthenticated) {
@@ -152,7 +150,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

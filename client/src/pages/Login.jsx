@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 
@@ -32,9 +34,7 @@ export default function Login() {
       const user = await login(form);
       redirectByRole(user.role);
     } catch (err) {
-      const message =
-        err.response?.data?.message || 'Login failed. Please try again.';
-      setError(message);
+      setError(getApiErrorMessage(err, 'Login failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -43,11 +43,7 @@ export default function Login() {
   return (
     <AuthLayout title="Sign in" subtitle="Access your BDA Team Module account">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
+        <ErrorAlert message={error} onDismiss={() => setError('')} />
 
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-700">

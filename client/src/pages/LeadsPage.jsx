@@ -3,9 +3,13 @@ import DashboardLayout from '../components/DashboardLayout';
 import LeadFormModal from '../components/LeadFormModal';
 import LeadsTable from '../components/LeadsTable';
 import LeadsKanbanBoard from '../components/LeadsKanbanBoard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import { LEAD_STATUSES } from '../constants/leads';
+import { exportLeadsToCsv } from '../utils/exportLeadsCsv';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import * as leadService from '../services/leadService';
 import * as userService from '../services/userService';
 
@@ -49,7 +53,7 @@ export default function LeadsPage() {
       const response = await leadService.getLeads(params);
       setLeads(response.data.data.leads);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load leads');
+      setError(getApiErrorMessage(err, 'Failed to load leads'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +88,7 @@ export default function LeadsPage() {
       await leadService.deleteLead(id);
       await fetchLeads();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to delete lead');
+      setError(getApiErrorMessage(err, 'Failed to delete lead'));
     }
   };
 
@@ -98,7 +102,7 @@ export default function LeadsPage() {
       }
       await fetchLeads();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update assignment');
+      setError(getApiErrorMessage(err, 'Failed to update assignment'));
     } finally {
       setAssigningId(null);
     }
@@ -117,12 +121,18 @@ export default function LeadsPage() {
       await leadService.updateLead(leadId, { status: newStatus });
     } catch (err) {
       setLeads(previousLeads);
-      setError(
-        err.response?.data?.message || 'Failed to update lead status'
-      );
+      setError(getApiErrorMessage(err, 'Failed to update lead status'));
     } finally {
       setUpdatingLeadId(null);
     }
+  };
+
+  const handleExportCsv = () => {
+    if (leads.length === 0) {
+      setError('No leads to export');
+      return;
+    }
+    exportLeadsToCsv(leads);
   };
 
   const openAddModal = () => {
@@ -151,14 +161,16 @@ export default function LeadsPage() {
     <DashboardLayout title={pageTitle}>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Leads</h2>
+          <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+            Leads
+          </h2>
           <p className="text-sm text-slate-600 mt-1">
             {isAdmin
               ? 'Manage and assign leads across your team'
               : 'View and update leads assigned to you'}
           </p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
             <button
               type="button"
@@ -183,6 +195,14 @@ export default function LeadsPage() {
               Kanban
             </button>
           </div>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={loading || leads.length === 0}
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          >
+            Export CSV
+          </button>
           {isAdmin && (
             <button
               type="button"
@@ -197,7 +217,7 @@ export default function LeadsPage() {
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-2">
+          <div className="sm:col-span-2 lg:col-span-2">
             <label className="block text-xs font-medium text-slate-500 mb-1">
               Search
             </label>
@@ -275,16 +295,16 @@ export default function LeadsPage() {
         </div>
       </div>
 
-      {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
 
       {loading ? (
-        <p className="p-8 text-center text-slate-600 bg-white rounded-xl border border-slate-200">
-          Loading leads...
-        </p>
+        <div className="bg-white rounded-xl border border-slate-200">
+          <LoadingSpinner label="Loading leads..." />
+        </div>
       ) : view === VIEWS.KANBAN ? (
         <LeadsKanbanBoard
           leads={leads}

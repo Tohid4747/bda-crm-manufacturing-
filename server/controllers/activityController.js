@@ -150,8 +150,51 @@ const getUpcomingActivities = async (req, res) => {
   }
 };
 
+const getDueTodayCount = async (req, res) => {
+  try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const activityFilter = {
+      followUpDate: { $gte: startOfToday, $lte: endOfToday },
+    };
+
+    if (!isAdmin(req.user)) {
+      const leads = await Lead.find({ assignedTo: req.user._id }).select('_id');
+      const accessibleLeadIds = leads.map((l) => l._id);
+
+      if (accessibleLeadIds.length === 0) {
+        return res.status(200).json({
+          success: true,
+          message: 'Due today count fetched',
+          data: { count: 0 },
+        });
+      }
+
+      activityFilter.leadId = { $in: accessibleLeadIds };
+    }
+
+    const count = await Activity.countDocuments(activityFilter);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Due today count fetched',
+      data: { count },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching due today count',
+      data: null,
+    });
+  }
+};
+
 module.exports = {
   createActivity,
   getActivitiesByLead,
   getUpcomingActivities,
+  getDueTodayCount,
 };

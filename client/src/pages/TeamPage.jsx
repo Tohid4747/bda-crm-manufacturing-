@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import * as teamService from '../services/teamService';
 
 function formatRate(rate) {
@@ -19,7 +22,7 @@ export default function TeamPage() {
       const response = await teamService.getTeamMembers();
       setMembers(response.data.data.members);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load team members');
+      setError(getApiErrorMessage(err, 'Failed to load team members'));
     } finally {
       setLoading(false);
     }
@@ -32,21 +35,23 @@ export default function TeamPage() {
   return (
     <DashboardLayout title="Admin — Team Management">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-slate-900">Team</h2>
+        <h2 className="text-xl sm:text-2xl font-semibold text-slate-900">
+          Team
+        </h2>
         <p className="text-sm text-slate-600 mt-1">
           Manage BDA members and view their performance
         </p>
       </div>
 
-      {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
 
       <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
         {loading ? (
-          <p className="p-8 text-center text-slate-600">Loading team...</p>
+          <LoadingSpinner label="Loading team..." />
         ) : members.length === 0 ? (
           <p className="p-8 text-center text-slate-600">No BDA members found.</p>
         ) : (

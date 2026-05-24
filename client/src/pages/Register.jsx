@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthLayout from '../components/AuthLayout';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 
@@ -37,9 +39,7 @@ export default function Register() {
       const user = await register(form);
       redirectByRole(user.role);
     } catch (err) {
-      const message =
-        err.response?.data?.message || 'Registration failed. Please try again.';
-      setError(message);
+      setError(getApiErrorMessage(err, 'Registration failed. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -48,11 +48,7 @@ export default function Register() {
   return (
     <AuthLayout title="Create account" subtitle="Register for the BDA Team Module">
       <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
+        <ErrorAlert message={error} onDismiss={() => setError('')} />
 
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-slate-700">

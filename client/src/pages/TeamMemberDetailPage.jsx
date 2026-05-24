@@ -2,6 +2,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import StatusBadge from '../components/StatusBadge';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import * as teamService from '../services/teamService';
 
 function formatRate(rate) {
@@ -32,7 +35,7 @@ export default function TeamMemberDetailPage() {
       const response = await teamService.getMemberPerformance(id);
       setData(response.data.data);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load member details');
+      setError(getApiErrorMessage(err, 'Failed to load member details'));
       setData(null);
     } finally {
       setLoading(false);
@@ -59,7 +62,7 @@ export default function TeamMemberDetailPage() {
       await teamService.deactivateMember(id);
       await fetchPerformance();
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to deactivate member');
+      setError(getApiErrorMessage(err, 'Failed to deactivate member'));
     } finally {
       setDeactivating(false);
     }
@@ -76,19 +79,16 @@ export default function TeamMemberDetailPage() {
         ← Back to Team
       </Link>
 
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
+
       {loading ? (
-        <p className="text-slate-600">Loading member...</p>
-      ) : error && !member ? (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <LoadingSpinner label="Loading member..." />
       ) : member ? (
         <div className="space-y-6">
-          {error && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-              {error}
-            </p>
-          )}
 
           <div className="bg-white rounded-xl border border-slate-200 p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">

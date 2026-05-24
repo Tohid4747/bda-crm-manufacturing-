@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import ActivityTypeBadge from './ActivityTypeBadge';
+import LoadingSpinner from './LoadingSpinner';
+import ErrorAlert from './ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import * as activityService from '../services/activityService';
@@ -51,7 +54,7 @@ export default function UpcomingFollowUps() {
       setActivities(response.data.data.activities);
     } catch (err) {
       setError(
-        err.response?.data?.message || 'Failed to load upcoming follow-ups'
+        getApiErrorMessage(err, 'Failed to load upcoming follow-ups')
       );
     } finally {
       setLoading(false);
@@ -63,7 +66,7 @@ export default function UpcomingFollowUps() {
   }, [fetchUpcoming]);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
+    <div className="bg-white rounded-xl border border-slate-200 p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-slate-900">
         Upcoming Follow-ups
       </h2>
@@ -71,14 +74,10 @@ export default function UpcomingFollowUps() {
         Activities due today or overdue
       </p>
 
-      {error && (
-        <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
+      <ErrorAlert message={error} className="mt-4" />
 
       {loading ? (
-        <p className="mt-6 text-sm text-slate-600">Loading...</p>
+        <LoadingSpinner label="Loading follow-ups..." className="py-8" />
       ) : activities.length === 0 ? (
         <p className="mt-6 text-sm text-slate-500">
           No overdue or due-today follow-ups. You&apos;re all caught up.

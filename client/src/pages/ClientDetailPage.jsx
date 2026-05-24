@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
+import LoadingSpinner from '../components/LoadingSpinner';
+import ErrorAlert from '../components/ErrorAlert';
+import { getApiErrorMessage } from '../utils/getApiErrorMessage';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import * as clientService from '../services/clientService';
@@ -42,7 +45,7 @@ export default function ClientDetailPage() {
       const response = await clientService.getClientById(id);
       setClient(response.data.data.client);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load client');
+      setError(getApiErrorMessage(err, 'Failed to load client'));
       setClient(null);
     } finally {
       setLoading(false);
@@ -67,15 +70,17 @@ export default function ClientDetailPage() {
         ← Back to Clients
       </Link>
 
+      <ErrorAlert
+        message={error}
+        onDismiss={() => setError('')}
+        className="mb-4"
+      />
+
       {loading ? (
-        <p className="text-slate-600">Loading client...</p>
-      ) : error ? (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <LoadingSpinner label="Loading client..." />
       ) : client ? (
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-8 py-6 border-b border-slate-200 bg-slate-50/50">
+          <div className="px-4 sm:px-8 py-6 border-b border-slate-200 bg-slate-50/50">
             <p className="text-sm font-medium text-blue-600">Client</p>
             <h2 className="mt-1 text-2xl font-semibold text-slate-900">
               {client.name}
@@ -83,7 +88,7 @@ export default function ClientDetailPage() {
             <p className="text-slate-600 mt-1">{client.company}</p>
           </div>
 
-          <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="p-4 sm:p-8 grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
             <section>
               <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wide">
                 Contact Information
