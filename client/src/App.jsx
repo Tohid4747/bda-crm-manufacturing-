@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import BDADashboard from './pages/BDADashboard';
+import LeadsPage from './pages/LeadsPage';
 import { ROLES } from './constants/auth';
 
 function RootRedirect() {
@@ -59,10 +60,26 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/leads"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <LeadsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/bda/dashboard"
         element={
           <ProtectedRoute allowedRoles={[ROLES.BDA]}>
             <BDADashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bda/leads"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.BDA]}>
+            <LeadsPage />
           </ProtectedRoute>
         }
       />
