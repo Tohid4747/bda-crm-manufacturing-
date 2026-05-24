@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import AdminDashboard from './pages/AdminDashboard';
 import BDADashboard from './pages/BDADashboard';
 import LeadsPage from './pages/LeadsPage';
+import LeadDetailPage from './pages/LeadDetailPage';
 import ClientsPage from './pages/ClientsPage';
 import ClientDetailPage from './pages/ClientDetailPage';
 import { ROLES } from './constants/auth';
@@ -70,6 +71,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/admin/leads/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+            <LeadDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin/clients"
         element={
           <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
@@ -98,6 +107,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[ROLES.BDA]}>
             <LeadsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/bda/leads/:id"
+        element={
+          <ProtectedRoute allowedRoles={[ROLES.BDA]}>
+            <LeadDetailPage />
           </ProtectedRoute>
         }
       />

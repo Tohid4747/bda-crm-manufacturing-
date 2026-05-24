@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
 
 function formatDate(dateStr) {
@@ -17,6 +18,7 @@ export default function LeadsTable({
   onEdit,
   onDelete,
   onAssignChange,
+  leadsBasePath,
 }) {
   if (leads.length === 0) {
     return <p className="p-8 text-center text-slate-600">No leads found.</p>;
@@ -41,8 +43,13 @@ export default function LeadsTable({
         <tbody className="divide-y divide-slate-100">
           {leads.map((lead) => (
             <tr key={lead.id} className="hover:bg-slate-50/50">
-              <td className="px-4 py-3 font-medium text-slate-900">
-                {lead.name}
+              <td className="px-4 py-3 font-medium">
+                <Link
+                  to={`${leadsBasePath}/${lead.id}`}
+                  className="text-slate-900 hover:text-blue-600"
+                >
+                  {lead.name}
+                </Link>
               </td>
               <td className="px-4 py-3 text-slate-700">{lead.company}</td>
               <td className="px-4 py-3 text-slate-600">
@@ -75,6 +82,12 @@ export default function LeadsTable({
                 {formatDate(lead.createdAt)}
               </td>
               <td className="px-4 py-3 text-right whitespace-nowrap">
+                <Link
+                  to={`${leadsBasePath}/${lead.id}`}
+                  className="text-blue-600 hover:underline mr-3"
+                >
+                  View
+                </Link>
                 <button
                   type="button"
                   onClick={() => onEdit(lead)}

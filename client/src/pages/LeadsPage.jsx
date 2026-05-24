@@ -140,6 +140,8 @@ export default function LeadsPage() {
     setEditingLead(null);
   };
 
+  const leadsBasePath = isAdmin ? '/admin/leads' : '/bda/leads';
+
   const pageTitle = useMemo(
     () => (isAdmin ? 'Admin — Lead Management' : 'BDA — My Leads'),
     [isAdmin]
@@ -296,6 +298,7 @@ export default function LeadsPage() {
             isAdmin={isAdmin}
             bdaUsers={bdaUsers}
             assigningId={assigningId}
+            leadsBasePath={leadsBasePath}
             onEdit={openEditModal}
             onDelete={handleDelete}
             onAssignChange={handleAssignChange}

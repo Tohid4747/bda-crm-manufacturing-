@@ -1,28 +1,11 @@
 const Lead = require('../models/Lead');
 const User = require('../models/User');
 const { createClientFromLead } = require('../services/clientConversionService');
+const { isAdmin, findLeadForUser } = require('../utils/leadAccess');
 
 const { STATUSES } = Lead;
 
 const formatLeads = (leads) => leads.map((lead) => lead.toResponseObject());
-
-const isAdmin = (user) => user.role === 'Admin';
-
-const findLeadForUser = async (id, user) => {
-  const lead = await Lead.findById(id).populate('assignedTo', 'name email');
-  if (!lead) return null;
-
-  if (isAdmin(user)) return lead;
-
-  if (
-    lead.assignedTo &&
-    lead.assignedTo._id.toString() === user._id.toString()
-  ) {
-    return lead;
-  }
-
-  return null;
-};
 
 const createLead = async (req, res) => {
   try {
@@ -95,6 +78,32 @@ const createLead = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error while creating lead',
+      data: null,
+    });
+  }
+};
+
+const getLeadById = async (req, res) => {
+  try {
+    const lead = await findLeadForUser(req.params.id, req.user);
+
+    if (!lead) {
+      return res.status(404).json({
+        success: false,
+        message: 'Lead not found or access denied',
+        data: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Lead fetched successfully',
+      data: { lead: lead.toResponseObject() },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching lead',
       data: null,
     });
   }
@@ -318,6 +327,7 @@ const assignLead = async (req, res) => {
 module.exports = {
   createLead,
   getLeads,
+  getLeadById,
   updateLead,
   deleteLead,
   assignLead,
