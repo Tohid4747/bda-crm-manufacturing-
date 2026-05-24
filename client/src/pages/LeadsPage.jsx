@@ -1,21 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import StatusBadge from '../components/StatusBadge';
 import LeadFormModal from '../components/LeadFormModal';
+import LeadsTable from '../components/LeadsTable';
+import LeadsKanbanBoard from '../components/LeadsKanbanBoard';
 import { useAuth } from '../context/AuthContext';
 import { ROLES } from '../constants/auth';
 import { LEAD_STATUSES } from '../constants/leads';
 import * as leadService from '../services/leadService';
 import * as userService from '../services/userService';
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
+const VIEWS = {
+  TABLE: 'table',
+  KANBAN: 'kanban',
+};
 
 export default function LeadsPage() {
   const { user } = useAuth();
@@ -25,6 +22,8 @@ export default function LeadsPage() {
   const [bdaUsers, setBdaUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [view, setView] = useState(VIEWS.TABLE);
+  const [updatingLeadId, setUpdatingLeadId] = useState(null);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -105,6 +104,27 @@ export default function LeadsPage() {
     }
   };
 
+  const handleStatusChange = async (leadId, newStatus) => {
+    const previousLeads = leads;
+    setUpdatingLeadId(leadId);
+    setLeads((prev) =>
+      prev.map((lead) =>
+        lead.id === leadId ? { ...lead, status: newStatus } : lead
+      )
+    );
+
+    try {
+      await leadService.updateLead(leadId, { status: newStatus });
+    } catch (err) {
+      setLeads(previousLeads);
+      setError(
+        err.response?.data?.message || 'Failed to update lead status'
+      );
+    } finally {
+      setUpdatingLeadId(null);
+    }
+  };
+
   const openAddModal = () => {
     setEditingLead(null);
     setModalOpen(true);
@@ -136,15 +156,41 @@ export default function LeadsPage() {
               : 'View and update leads assigned to you'}
           </p>
         </div>
-        {isAdmin && (
-          <button
-            type="button"
-            onClick={openAddModal}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + Add Lead
-          </button>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="inline-flex rounded-lg border border-slate-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setView(VIEWS.TABLE)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                view === VIEWS.TABLE
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Table
+            </button>
+            <button
+              type="button"
+              onClick={() => setView(VIEWS.KANBAN)}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                view === VIEWS.KANBAN
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Kanban
+            </button>
+          </div>
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={openAddModal}
+              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + Add Lead
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 p-4 mb-6">
@@ -233,90 +279,29 @@ export default function LeadsPage() {
         </p>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-        {loading ? (
-          <p className="p-8 text-center text-slate-600">Loading leads...</p>
-        ) : leads.length === 0 ? (
-          <p className="p-8 text-center text-slate-600">No leads found.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-600">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Company</th>
-                  <th className="px-4 py-3 font-medium">Contact</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  {isAdmin && (
-                    <th className="px-4 py-3 font-medium">Assigned BDA</th>
-                  )}
-                  <th className="px-4 py-3 font-medium">Created</th>
-                  <th className="px-4 py-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 font-medium text-slate-900">
-                      {lead.name}
-                    </td>
-                    <td className="px-4 py-3 text-slate-700">{lead.company}</td>
-                    <td className="px-4 py-3 text-slate-600">
-                      <div>{lead.contact || '—'}</div>
-                      {lead.email && (
-                        <div className="text-xs text-slate-400">{lead.email}</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={lead.status} />
-                    </td>
-                    {isAdmin && (
-                      <td className="px-4 py-3">
-                        <select
-                          value={lead.assignedTo?.id || ''}
-                          disabled={assigningId === lead.id}
-                          onChange={(e) =>
-                            handleAssignChange(lead.id, e.target.value)
-                          }
-                          className="rounded-lg border border-slate-300 px-2 py-1 text-xs min-w-[140px]"
-                        >
-                          <option value="">Unassigned</option>
-                          {bdaUsers.map((bda) => (
-                            <option key={bda.id} value={bda.id}>
-                              {bda.name}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                    )}
-                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                      {formatDate(lead.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(lead)}
-                        className="text-blue-600 hover:underline mr-3"
-                      >
-                        Edit
-                      </button>
-                      {isAdmin && (
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(lead.id)}
-                          className="text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <p className="p-8 text-center text-slate-600 bg-white rounded-xl border border-slate-200">
+          Loading leads...
+        </p>
+      ) : view === VIEWS.KANBAN ? (
+        <LeadsKanbanBoard
+          leads={leads}
+          onStatusChange={handleStatusChange}
+          updatingLeadId={updatingLeadId}
+        />
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <LeadsTable
+            leads={leads}
+            isAdmin={isAdmin}
+            bdaUsers={bdaUsers}
+            assigningId={assigningId}
+            onEdit={openEditModal}
+            onDelete={handleDelete}
+            onAssignChange={handleAssignChange}
+          />
+        </div>
+      )}
 
       <LeadFormModal
         open={modalOpen}
